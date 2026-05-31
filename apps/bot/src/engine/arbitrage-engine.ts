@@ -27,11 +27,18 @@ export class ArbitrageEngine {
   private lastScanDuration = 0;
   private pairs: TradingPair[] = ['BTC/USDT', 'ETH/USDT'];
 
+  private lastScanTime = 0;
+  private readonly SCAN_INTERVAL_MS = 100; // Max 10 scans/second (was: every update ~2000/s)
+
   start(): void {
     eventBus.on('orderbook', () => {
-      this.scan();
+      const now = Date.now();
+      if (now - this.lastScanTime >= this.SCAN_INTERVAL_MS) {
+        this.lastScanTime = now;
+        this.scan();
+      }
     });
-    logger.info('🧠 Arbitrage engine started — scanning on every orderbook update');
+    logger.info('🧠 Arbitrage engine started — scanning max 10/s');
   }
 
   getStats() {

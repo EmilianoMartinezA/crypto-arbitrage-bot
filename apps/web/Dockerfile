@@ -3,6 +3,7 @@ FROM node:20-alpine AS base
 # Web builder
 FROM base AS builder
 WORKDIR /app
+COPY tsconfig.base.json ./
 COPY package.json package-lock.json* ./
 COPY packages/shared/package.json ./packages/shared/
 COPY apps/web/package.json ./apps/web/

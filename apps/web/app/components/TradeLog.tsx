@@ -179,7 +179,7 @@ export function TradeLog({ trades }: TradeLogProps) {
 
 function ExportMenu() {
   const [open, setOpen] = useState(false);
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
 
   return (
     <div className="relative">

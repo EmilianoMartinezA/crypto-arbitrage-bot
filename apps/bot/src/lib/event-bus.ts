@@ -31,3 +31,8 @@ class TypedEventEmitter extends EventEmitter {
 
 export const eventBus = new TypedEventEmitter();
 eventBus.setMaxListeners(50);
+
+// Prevent unhandled 'error' event from crashing the process
+eventBus.on('error', () => {
+  // Errors are logged in connectors; this handler prevents process crash
+});

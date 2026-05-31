@@ -27,5 +27,5 @@ RUN mkdir -p /app/data && chown botuser:nodejs /app/data
 USER botuser
 EXPOSE 4000
 HEALTHCHECK --interval=10s --timeout=3s --start-period=30s \
-  CMD wget -q --spider http://localhost:4000/health || exit 1
+  CMD node -e "fetch('http://localhost:4000/health').then(r=>{if(!r.ok)throw 1}).catch(()=>process.exit(1))"
 CMD ["node", "apps/bot/dist/index.js"]

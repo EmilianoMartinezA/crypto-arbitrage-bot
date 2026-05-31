@@ -24,5 +24,5 @@ USER nextjs
 EXPOSE 3000
 ENV PORT=3000
 HEALTHCHECK --interval=10s --timeout=3s --start-period=20s \
-  CMD wget -q --spider http://localhost:3000/ || exit 1
+  CMD node -e "fetch('http://localhost:3000/').then(r=>{if(!r.ok)throw 1}).catch(()=>process.exit(1))"
 CMD ["node", "apps/web/server.js"]

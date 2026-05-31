@@ -10,6 +10,52 @@
 ![SQLite](https://img.shields.io/badge/SQLite-WAL-lightgrey)
 ![License](https://img.shields.io/badge/License-MIT-yellow)
 
+## 🌐 Live Demo
+
+> ⚠️ **Note:** Due to the data center location (us-east-1), exchanges take ~2 minutes to fully connect after a cold start. Wait for all 7 exchanges to show 🟢 status.
+
+**Dashboard:** [http://44.223.35.32](http://44.223.35.32)  
+**Health Check:** [http://44.223.35.32/health](http://44.223.35.32/health)  
+**API Status:** [http://44.223.35.32/api/status](http://44.223.35.32/api/status)  
+**Export Trades:** [http://44.223.35.32/api/export/trades.csv](http://44.223.35.32/api/export/trades.csv)
+
+## 📸 Screenshots
+
+### Dashboard Full View
+*Real-time exchange cards, spread matrix, toast notifications (7/7 exchanges connected)*
+
+![Dashboard Full](docs/images/dashboard-full.png)
+
+### Notification Center
+*Trade history drawer with Popups ON/OFF toggle and auto-expiring entries*
+
+![Notification Center](docs/images/notification-center.png)
+
+### P&L Chart + Opportunities Table
+*Live spread tracking, filterable opportunities (type/pair/exchange dropdowns)*
+
+![Chart & Opportunities](docs/images/chart-opportunities.png)
+
+### Trade Log + CSV Export
+*Executed trades with one-click CSV download*
+
+![Trade Log Export](docs/images/trade-log-export.png)
+
+### Bot Startup Logs
+*7 exchanges connecting, circuit breaker active, SQLite initialized, all systems running*
+
+![Logs Startup](docs/images/logs-startup.png)
+
+### Bot Running — Detection & Execution
+*Cross-exchange + triangular opportunities detected, trades executed*
+
+![Logs Running](docs/images/logs-running.png)
+
+### Graceful Shutdown
+*All exchanges disconnected, final P&L reported, database closed*
+
+![Logs Shutdown](docs/images/logs-shutdown.png)
+
 ---
 
 ## 🎯 What It Does
@@ -298,7 +344,7 @@ trades (id, opportunity_id FK, exchange, pair, side, requested_quantity, filled_
 ## 🧪 Testing
 
 ```bash
-npx vitest run          # Run all tests (19 tests)
+npx vitest run          # Run all tests (40 tests)
 npx vitest run --watch  # Watch mode
 ```
 
@@ -306,7 +352,8 @@ npx vitest run --watch  # Watch mode
 
 | Suite | Tests | What it validates |
 |-------|-------|-------------------|
-| `arbitrage.test.ts` | 11 | Opportunity detection, threshold logic, fee calculation, slippage estimation |
+| `arbitrage.test.ts` | 11 | OrderBook store, opportunity detection, threshold logic, slippage estimation |
+| `algorithms.test.ts` | 21 | Triangular math, risk manager logic, statistical z-score, net profit, circuit breaker |
 | `fees.test.ts` | 8 | Fee matrix values, Decimal precision, all exchanges covered |
 
 ---
@@ -345,6 +392,80 @@ npx vitest run --watch  # Watch mode
 | **Docker Compose** | Single-command production deploy with nginx + Let's Encrypt |
 | **Kraken/KuCoin local book** | Maintain Map state, apply deltas (not replace) for accurate depth |
 | **MIN_EXECUTION_THRESHOLD=$5** | Low enough to show activity, high enough to filter noise |
+
+---
+
+## ☁️ AWS Architecture
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    AWS EC2 (us-east-1)                        │
+│                    t3.small · 2 vCPU · 2GB RAM                │
+│                    IP: 44.223.35.32                           │
+│                                                              │
+│  ┌────────────────────────────────────────────────────────┐  │
+│  │              Docker Compose Network                     │  │
+│  │                                                        │  │
+│  │  ┌──────────┐    ┌──────────┐    ┌──────────────────┐ │  │
+│  │  │  Nginx   │    │  Next.js │    │   Bot (Node.js)  │ │  │
+│  │  │  :80     │──▶ │  :3000   │    │   :4000          │ │  │
+│  │  │          │    └──────────┘    │                  │ │  │
+│  │  │  /       │─── proxy ──────────│  /events (SSE)   │ │  │
+│  │  │  /api/*  │─── proxy ──────────│  /api/* (REST)   │ │  │
+│  │  │  /events │─── proxy ──────────│  /health         │ │  │
+│  │  └──────────┘                    │                  │ │  │
+│  │                                  │  ┌────────────┐  │ │  │
+│  │                                  │  │ SQLite DB  │  │ │  │
+│  │                                  │  │ (WAL mode) │  │ │  │
+│  │                                  │  └────────────┘  │ │  │
+│  │                                  └──────────────────┘ │  │
+│  └────────────────────────────────────────────────────────┘  │
+│                                                              │
+│  Volume: bot-data → /app/data/arbitrage.db                   │
+└─────────────────────────────────────────────────────────────┘
+         │
+         │ WebSocket (wss://)
+         ▼
+┌────────┬────────┬────────┬────────┬────────┬────────┬────────┐
+│Binance │ Kraken │  OKX   │ Bybit  │Bitfinex│ KuCoin │Bitstamp│
+└────────┴────────┴────────┴────────┴────────┴────────┴────────┘
+```
+
+### Deployment Specs
+
+| Component | Specification |
+|-----------|---------------|
+| **Instance** | EC2 t3.small (2 vCPU, 2GB RAM, 20GB gp3) |
+| **Region** | us-east-1 (N. Virginia) |
+| **OS** | Amazon Linux 2023 |
+| **Runtime** | Docker 25.0 + Compose v2.29 |
+| **Security Group** | Ports 22 (SSH), 80 (HTTP), 443 (HTTPS) |
+| **Persistence** | Named Docker volume (`bot-data`) |
+| **Startup time** | ~2 min (7 exchanges connect sequentially) |
+
+### Replicate Deployment
+
+```bash
+# 1. Launch EC2 (Amazon Linux 2023, t3.small, 20GB gp3)
+# 2. SSH into instance
+ssh -i your-key.pem ec2-user@YOUR_IP
+
+# 3. Install Docker + Compose
+sudo dnf install -y docker git
+sudo systemctl enable docker && sudo systemctl start docker
+sudo curl -sL https://github.com/docker/compose/releases/latest/download/docker-compose-linux-x86_64 \
+  -o /usr/local/lib/docker/cli-plugins/docker-compose
+sudo chmod +x /usr/local/lib/docker/cli-plugins/docker-compose
+
+# 4. Clone and deploy
+git clone https://github.com/EmilianoMartinezA/crypto-arbitrage-bot.git
+cd crypto-arbitrage-bot
+sudo docker compose up --build -d
+
+# 5. Verify (wait ~2 min for exchanges to connect)
+curl http://localhost/health
+# {"status":"ok","uptime":120.5}
+```
 
 ---
 

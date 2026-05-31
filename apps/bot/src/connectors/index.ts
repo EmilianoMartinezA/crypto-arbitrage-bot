@@ -22,7 +22,8 @@ export class ConnectorManager {
 
   constructor() {
     this.connectors = [
-      new BinanceConnector(),
+      // Binance blocked from AWS IPs (HTTP 451) — disabled in production
+      // new BinanceConnector(),
       new KrakenConnector(),
       new OKXConnector(),
       new BybitConnector(),

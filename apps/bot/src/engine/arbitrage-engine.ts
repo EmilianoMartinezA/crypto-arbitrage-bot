@@ -109,9 +109,12 @@ export class ArbitrageEngine {
     // Skip if gross spread is below detection threshold
     if (grossSpread.lt(MIN_DETECTION_THRESHOLD)) return;
 
-    // Execute when gross spread exceeds threshold ($5)
-    // Shows the bot actively trades while the 5s cooldown prevents flooding
-    const isExecutable = grossSpread.gte(MIN_EXECUTION_THRESHOLD) && maxVolume.gt(new Decimal('0.0001'));
+    // Execute when gross spread is significant and net loss is bounded
+    // (real arb profits are rare; we demonstrate the full pipeline with bounded risk)
+    const maxAcceptableLoss = bestAsk.price.mul(new Decimal('0.002')); // max 0.2% loss
+    const isExecutable = grossSpread.gte(MIN_EXECUTION_THRESHOLD)
+      && finalNetProfit.gt(maxAcceptableLoss.neg())
+      && maxVolume.gt(new Decimal('0.0001'));
 
     const opportunity: ArbitrageOpportunity = {
       id: randomUUID(),

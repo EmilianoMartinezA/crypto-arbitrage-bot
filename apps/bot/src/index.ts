@@ -40,14 +40,24 @@ async function main(): Promise<void> {
   // 5. Start statistical arbitrage engine (mean-reversion)
   statisticalArbEngine.start();
 
-  // 6. Initialize database + persist opportunities BEFORE trade simulator
+  // 6. Initialize database + persist executed opportunities
   getDatabase();
-  purgeOldData(); // Keep DB lean for fast queries
+  purgeOldData();
+
+  // Throttled persistence — max 1 insert per second to avoid blocking event loop
+  let lastInsertTime = 0;
   eventBus.on('opportunity', (opp) => {
     if (opp.executed) {
-      insertOpportunity(opp);
+      const now = Date.now();
+      if (now - lastInsertTime > 1000) {
+        lastInsertTime = now;
+        insertOpportunity(opp);
+      }
     }
   });
+
+  // Periodic purge to keep DB lean (every 5 minutes)
+  setInterval(() => purgeOldData(200, 500), 5 * 60 * 1000);
 
   // 7. Start trade simulator (listens to opportunity events)
   tradeSimulator.start();

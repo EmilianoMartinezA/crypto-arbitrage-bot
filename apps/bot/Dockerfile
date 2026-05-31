@@ -3,11 +3,10 @@ FROM node:20-alpine AS base
 # Bot builder
 FROM base AS builder
 WORKDIR /app
-COPY tsconfig.base.json ./
-COPY package.json package-lock.json* ./
+COPY tsconfig.base.json package.json package-lock.json ./
 COPY packages/shared/package.json ./packages/shared/
 COPY apps/bot/package.json ./apps/bot/
-RUN npm install
+RUN npm ci --ignore-scripts
 COPY packages/shared/ ./packages/shared/
 COPY apps/bot/ ./apps/bot/
 RUN npm run build -w packages/shared
@@ -27,4 +26,6 @@ COPY --from=builder /app/apps/bot/package.json ./apps/bot/
 RUN mkdir -p /app/data && chown botuser:nodejs /app/data
 USER botuser
 EXPOSE 4000
+HEALTHCHECK --interval=10s --timeout=3s --start-period=30s \
+  CMD wget -q --spider http://localhost:4000/health || exit 1
 CMD ["node", "apps/bot/dist/index.js"]

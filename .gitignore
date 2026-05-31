@@ -8,7 +8,6 @@ dist/
 data/*.db
 data/*.db-shm
 data/*.db-wal
-package-lock.json
 CLAUDE.md
 wasabi-toolbag/
 challenge-context/

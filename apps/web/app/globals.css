@@ -1,0 +1,85 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --font-geist-sans: 'Inter', system-ui, -apple-system, sans-serif;
+    --font-geist-mono: 'JetBrains Mono', 'Courier New', monospace;
+  }
+
+  html {
+    overflow-anchor: none;
+  }
+
+  body {
+    font-family: var(--font-geist-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    background: #0a0d14;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  /* Premium scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.2);
+  }
+}
+
+@layer utilities {
+  .font-mono {
+    font-family: var(--font-geist-mono);
+  }
+
+  @keyframes flash-green {
+    0% { background-color: rgba(0, 214, 143, 0.3); }
+    50% { background-color: rgba(0, 214, 143, 0.1); }
+    100% { background-color: transparent; }
+  }
+
+  .animate-flash-green {
+    animation: flash-green 1s ease-out;
+  }
+
+  /* Glass morphism utility */
+  .glass {
+    background: rgba(18, 21, 31, 0.8);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+  }
+}
+
+/* Hide TradingView watermark link to prevent redirect */
+.tv-lightweight-charts a[href*="tradingview"] {
+  pointer-events: none !important;
+  opacity: 0.3 !important;
+}
+
+@keyframes shrink {
+  from { width: 100%; }
+  to { width: 0%; }
+}
+
+@keyframes toastIn {
+  from { transform: translateY(-12px) scale(0.95); opacity: 0; }
+  to { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+@keyframes slideIn {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}

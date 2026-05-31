@@ -40,15 +40,21 @@ export class StatisticalArbEngine {
   private exchanges: ExchangeName[] = ['binance', 'okx', 'bybit', 'bitstamp', 'kraken', 'kucoin', 'bitfinex'];
   private pair: TradingPair = 'BTC/USDT';
 
+  private lastCollectTime = 0;
+
   start(): void {
-    // Collect spread data on every orderbook update
+    // Collect spread data max 2x/second (not on every update)
     eventBus.on('orderbook', (book) => {
       if (book.pair === this.pair) {
-        this.collectSpreadData();
+        const now = Date.now();
+        if (now - this.lastCollectTime >= 500) {
+          this.lastCollectTime = now;
+          this.collectSpreadData();
+        }
       }
     });
 
-    // Run signal detection every 1s (not on every tick to avoid flooding)
+    // Run signal detection every 1s
     this.scanTimer = setInterval(() => {
       this.detectSignals();
     }, SCAN_INTERVAL_MS);

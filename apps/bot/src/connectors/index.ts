@@ -38,9 +38,18 @@ export class ConnectorManager {
     const results = await Promise.allSettled(
       this.connectors.map((connector) => {
         // Wire up event handling before connecting
+        // Store always gets the latest data; eventBus is throttled to prevent CPU saturation
+        const lastEmit = new Map<string, number>();
+        const EMIT_INTERVAL = 200; // Max 5 events/sec per exchange:pair
         connector.on('orderbook', (book: NormalizedOrderBook) => {
           orderBookStore.update(book);
-          eventBus.emit('orderbook', book);
+          const key = `${book.exchange}:${book.pair}`;
+          const now = Date.now();
+          const last = lastEmit.get(key) ?? 0;
+          if (now - last >= EMIT_INTERVAL) {
+            lastEmit.set(key, now);
+            eventBus.emit('orderbook', book);
+          }
         });
 
         connector.on('error', (error: Error) => {

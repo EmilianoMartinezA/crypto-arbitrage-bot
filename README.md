@@ -19,7 +19,7 @@
 **API Status:** [http://44.223.35.32/api/status](http://44.223.35.32/api/status)  
 **Export Trades:** [http://44.223.35.32/api/export/trades.csv](http://44.223.35.32/api/export/trades.csv)
 
-## 📸 Screenshots
+## Screenshots
 
 ### Dashboard Full View
 *Real-time exchange cards, spread matrix, toast notifications (7/7 exchanges connected)*

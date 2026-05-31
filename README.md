@@ -12,7 +12,7 @@
 
 ## 🌐 Live Demo
 
-> ⚠️ **Note:** Due to the data center location (us-east-1), exchanges take ~2 minutes to fully connect after a cold start. Wait for all 7 exchanges to show 🟢 status.
+> ⚠️ **Note:** Due to the data center location (us-east-1), exchanges take max ~2 minutes to fully connect after a cold start. Wait for all 7 exchanges to show 🟢 status.
 
 **Dashboard:** [http://44.223.35.32](http://44.223.35.32)  
 **Health Check:** [http://44.223.35.32/health](http://44.223.35.32/health)  

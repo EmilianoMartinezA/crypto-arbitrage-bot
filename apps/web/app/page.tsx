@@ -12,8 +12,7 @@ import { SpreadMatrix } from './components/SpreadMatrix';
 import { TradeToast, ToastData } from './components/TradeToast';
 import { AnimatedBackground } from './components/AnimatedBackground';
 
-const API_URL =
-  process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
 
 export default function DashboardPage() {
   const [toasts, setToasts] = useState<ToastData[]>([]);

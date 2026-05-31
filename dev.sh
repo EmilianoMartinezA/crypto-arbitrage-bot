@@ -15,7 +15,7 @@ sleep 3
 
 # Start Next.js frontend
 echo "🌐 Starting dashboard on :3000..."
-cd apps/web && npx next dev -p 3000 &
+NEXT_PUBLIC_API_URL=http://localhost:4000 npx next dev -p 3000 --dir apps/web &
 NEXT_PID=$!
 cd ../..
 

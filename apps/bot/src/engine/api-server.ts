@@ -127,7 +127,9 @@ export function startAPIServer(
       return;
     }
 
-    const url = req.url ?? '/';
+    const rawUrl = req.url ?? '/';
+    const [url, queryString] = rawUrl.split('?') as [string, string | undefined];
+    const params = new URLSearchParams(queryString || '');
 
     if (url === '/events') return handleSSE(req, res);
     if (url === '/api/status') return handleStatus(res, getEngineStats, getSimulatorStats);
@@ -136,8 +138,8 @@ export function startAPIServer(
     if (url === '/api/wallets') return handleJSON(res, walletManager.getAllBalances().map(serializeWallet));
     if (url === '/api/pnl') return handlePnL(res);
     if (url === '/health') return handleJSON(res, { status: 'ok', uptime: process.uptime() });
-    if (url === '/api/history/trades') return handleJSON(res, getRecentTrades(100));
-    if (url === '/api/history/opportunities') return handleJSON(res, getRecentOpportunities(200));
+    if (url === '/api/history/trades') return handleJSON(res, getRecentTrades(Number(params.get('limit')) || 20));
+    if (url === '/api/history/opportunities') return handleJSON(res, getRecentOpportunities(Number(params.get('limit')) || 30));
     if (url === '/api/export/trades.csv') return handleCSVExport(res, 'trades');
     if (url === '/api/export/opportunities.csv') return handleCSVExport(res, 'opportunities');
 

@@ -81,54 +81,53 @@ export function useSSE(url: string, options?: UseSSEOptions): UseSSEReturn {
   });
   const [connected, setConnected] = useState(false);
 
-  // Hydrate from SQLite history on mount
+  // Hydrate from SQLite history on mount (non-blocking, deferred)
   useEffect(() => {
     const baseUrl = url.replace('/events', '');
+    // Defer history fetch so SSE connects first (UX priority)
+    const timer = setTimeout(() => {
+      fetch(`${baseUrl}/api/history/trades?limit=20`)
+        .then((r) => r.json())
+        .then((rows: Array<Record<string, unknown>>) => {
+          if (!rows.length) return;
+          const hydrated: Trade[] = rows.map((row) => ({
+            timestamp: row.executed_at as number,
+            side: (row.side as string) === 'buy' ? 'BUY' : 'SELL',
+            exchange: row.exchange as string,
+            price: parseFloat(row.average_price as string) || 0,
+            volume: parseFloat(row.filled_quantity as string) || 0,
+            fee: parseFloat(row.fee_paid as string) || 0,
+            profit: 0,
+            latency: row.latency_ms as number,
+            opportunityId: row.opportunity_id as string,
+          }));
+          setTrades((prev) => prev.length === 0 ? hydrated : prev);
+        })
+        .catch(() => {});
 
-    fetch(`${baseUrl}/api/history/trades`)
-      .then((r) => r.json())
-      .then((rows: Array<Record<string, unknown>>) => {
-        if (!rows.length) return;
-        const hydrated: Trade[] = rows.map((row) => ({
-          timestamp: row.executed_at as number,
-          side: (row.side as string) === 'buy' ? 'BUY' : 'SELL',
-          exchange: row.exchange as string,
-          price: parseFloat(row.average_price as string) || 0,
-          volume: parseFloat(row.filled_quantity as string) || 0,
-          fee: parseFloat(row.fee_paid as string) || 0,
-          profit: 0,
-          latency: row.latency_ms as number,
-          opportunityId: row.opportunity_id as string,
-        }));
-        setTrades((prev) => prev.length === 0 ? hydrated : prev);
-      })
-      .catch(() => {});
+      fetch(`${baseUrl}/api/history/opportunities?limit=30`)
+        .then((r) => r.json())
+        .then((rows: Array<Record<string, unknown>>) => {
+          if (!rows.length) return;
+          const hydrated: Opportunity[] = rows.map((row) => ({
+            timestamp: row.detected_at as number,
+            type: (row.type as string) as 'simple' | 'triangular' | 'statistical',
+            pair: row.pair as string,
+            buyExchange: row.buy_exchange as string,
+            sellExchange: row.sell_exchange as string,
+            buyPrice: parseFloat(row.buy_price as string) || 0,
+            sellPrice: parseFloat(row.sell_price as string) || 0,
+            spread: parseFloat(row.gross_spread as string) || 0,
+            netProfit: parseFloat(row.net_profit as string) || 0,
+            netProfitPercent: parseFloat(row.net_profit_percent as string) || 0,
+            volume: parseFloat(row.max_volume as string) || 0,
+          }));
+          setOpportunities((prev) => prev.length === 0 ? hydrated.slice(0, MAX_OPPORTUNITIES) : prev);
+        })
+        .catch(() => {});
+    }, 2000); // 2s delay — let SSE connect first
 
-    fetch(`${baseUrl}/api/history/opportunities`)
-      .then((r) => r.json())
-      .then((rows: Array<Record<string, unknown>>) => {
-        if (!rows.length) return;
-        const hydrated: Opportunity[] = rows.map((row) => ({
-          timestamp: row.detected_at as number,
-          type: (row.type as string) as 'simple' | 'triangular' | 'statistical',
-          pair: row.pair as string,
-          buyExchange: row.buy_exchange as string,
-          sellExchange: row.sell_exchange as string,
-          buyPrice: parseFloat(row.buy_price as string) || 0,
-          sellPrice: parseFloat(row.sell_price as string) || 0,
-          spread: parseFloat(row.gross_spread as string) || 0,
-          netProfit: parseFloat(row.net_profit as string) || 0,
-          netProfitPercent: parseFloat(row.net_profit_percent as string) || 0,
-          volume: parseFloat(row.max_volume as string) || 0,
-        }));
-        setOpportunities((prev) => prev.length === 0 ? hydrated.slice(0, MAX_OPPORTUNITIES) : prev);
-        setStatus((prev) => ({
-          ...prev,
-          totalOpportunities: Math.max(prev.totalOpportunities, hydrated.length),
-          totalTrades: Math.max(prev.totalTrades, 0),
-        }));
-      })
-      .catch(() => {});
+    return () => clearTimeout(timer);
   }, [url]);
 
   const eventSourceRef = useRef<EventSource | null>(null);

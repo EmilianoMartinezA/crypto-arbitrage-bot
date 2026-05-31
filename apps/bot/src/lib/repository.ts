@@ -146,3 +146,22 @@ export function getTradeStats(): { totalTrades: number; totalPnl: string } {
     return { totalTrades: 0, totalPnl: '0' };
   }
 }
+
+/** Purge old data keeping only the most recent N rows per table */
+export function purgeOldData(keepTrades = 500, keepOpps = 1000): void {
+  try {
+    const db = getDatabase();
+    db.prepare(`
+      DELETE FROM trades WHERE id NOT IN (
+        SELECT id FROM trades ORDER BY executed_at DESC LIMIT ?
+      )
+    `).run(keepTrades);
+    db.prepare(`
+      DELETE FROM opportunities WHERE id NOT IN (
+        SELECT id FROM opportunities ORDER BY detected_at DESC LIMIT ?
+      )
+    `).run(keepOpps);
+  } catch (err) {
+    logger.error(`DB purge failed: ${(err as Error).message}`);
+  }
+}

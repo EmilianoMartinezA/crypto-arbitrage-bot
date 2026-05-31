@@ -8,7 +8,7 @@ import { circuitBreaker } from './engine/circuit-breaker.js';
 import { TriangularArbitrageEngine } from './engine/triangular-engine.js';
 import { StatisticalArbEngine } from './engine/statistical-arb.js';
 import { getDatabase, closeDatabase } from './lib/database.js';
-import { insertOpportunity } from './lib/repository.js';
+import { insertOpportunity, purgeOldData } from './lib/repository.js';
 import { eventBus } from './lib/event-bus.js';
 
 const connectorManager = new ConnectorManager();
@@ -42,6 +42,7 @@ async function main(): Promise<void> {
 
   // 6. Initialize database + persist opportunities BEFORE trade simulator
   getDatabase();
+  purgeOldData(); // Keep DB lean for fast queries
   eventBus.on('opportunity', (opp) => {
     if (opp.executed) {
       insertOpportunity(opp);

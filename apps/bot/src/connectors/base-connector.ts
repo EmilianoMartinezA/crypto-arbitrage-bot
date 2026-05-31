@@ -164,6 +164,9 @@ export abstract class BaseConnector implements ExchangeConnector {
 
         this.ws.on('message', (raw: Buffer) => {
           this.lastMessageTime = Date.now();
+          // Throttle message processing to avoid CPU saturation
+          const now = Date.now();
+          if (now - this.lastEmitTime < this.EMIT_THROTTLE_MS) return;
           try {
             this.handleMessage(raw.toString());
           } catch (err) {

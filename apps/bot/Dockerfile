@@ -6,7 +6,7 @@ WORKDIR /app
 COPY package.json package-lock.json* ./
 COPY packages/shared/package.json ./packages/shared/
 COPY apps/bot/package.json ./apps/bot/
-RUN npm ci
+RUN npm install
 COPY packages/shared/ ./packages/shared/
 COPY apps/bot/ ./apps/bot/
 RUN npm run build -w packages/shared

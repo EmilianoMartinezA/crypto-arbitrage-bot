@@ -107,7 +107,13 @@ export abstract class BaseConnector implements ExchangeConnector {
 
   // ─── Emit Helpers ──────────────────────────────────────────────────────────
 
+  private lastEmitTime = 0;
+  private readonly EMIT_THROTTLE_MS = 100; // Max 10 emits/sec per connector
+
   protected emitOrderBook(book: NormalizedOrderBook): void {
+    const now = Date.now();
+    if (now - this.lastEmitTime < this.EMIT_THROTTLE_MS) return;
+    this.lastEmitTime = now;
     for (const handler of this.orderbookHandlers) {
       handler(book);
     }

@@ -41,7 +41,7 @@ export class ConnectorManager {
         // Wire up event handling before connecting
         // Store always gets the latest data; eventBus is throttled to prevent CPU saturation
         const lastEmit = new Map<string, number>();
-        const EMIT_INTERVAL = 200; // Max 5 events/sec per exchange:pair
+        const EMIT_INTERVAL = 500; // Max 2 events/sec per exchange:pair
         connector.on('orderbook', (book: NormalizedOrderBook) => {
           orderBookStore.update(book);
           const key = `${book.exchange}:${book.pair}`;

@@ -6,7 +6,7 @@ WORKDIR /app
 COPY tsconfig.base.json package.json package-lock.json ./
 COPY packages/shared/package.json ./packages/shared/
 COPY apps/bot/package.json ./apps/bot/
-RUN npm ci --ignore-scripts
+RUN apk add --no-cache python3 make g++ && npm ci
 COPY packages/shared/ ./packages/shared/
 COPY apps/bot/ ./apps/bot/
 RUN npm run build -w packages/shared
